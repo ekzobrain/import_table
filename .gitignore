@@ -1,0 +1,19 @@
+/.bundle/
+/.yardoc
+/_yardoc/
+/coverage/
+/doc/
+/pkg/
+/spec/reports/
+Gemfile.lock
+
+# Editors
+.idea
+
+# Ignore all logfiles and tempfiles.
+/log/*
+/tmp/*
+
+# Emacs backup file
+*~
+*#
