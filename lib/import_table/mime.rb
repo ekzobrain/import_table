@@ -27,6 +27,17 @@ module ImportTable
       MIME_TYPES[@mime[0]] if @mime&.any?
     end
 
+    def delimiter?
+      case @mime[0]
+      when 'application/csv'
+        ','
+      when 'text/plain'
+        ImportTable::Delimiter.type(@file)
+      else
+        'error'
+      end
+    end
+
     def encoding?
       @mime[1]&.sub('charset=', '') if @mime&.any?
     end
