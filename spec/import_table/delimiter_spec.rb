@@ -4,7 +4,7 @@ TEST_DELIMITERS = {
   'Define delimiter -> bar'       => { expect: '|', file: 'file_example_CSV_10_bar.csv' },
   'Define delimiter -> colon'     => { expect: ':', file: 'file_example_CSV_10_colon.csv' },
   'Define delimiter -> semicolon' => { expect: ';', file: 'file_example_CSV_10_semicolon.csv' },
-  'Define delimiter -> tab'       => { expect: "'\t'", file: 'file_example_CSV_10_tab.csv' },
+  'Define delimiter -> tab'       => { expect: "\t", file: 'file_example_CSV_10_tab.csv' },
   'Without delimiter'             => { expect: nil, file: 'file_example_CSV_10_without_delimiter.csv' }
 }.freeze
 
