@@ -10,7 +10,7 @@ module ImportTable
         fr = first_row(file)
 
         delim = DELIMITERS.reduce({}) { |res, deli| res.merge deli => fr.count(deli) }.max_by(&:last)
-        delim.last.zero? ? nil : delim.first
+        delim.last.zero? ? nil : delim.first.sub("\'\t\'", "\t")
       end
 
       private
