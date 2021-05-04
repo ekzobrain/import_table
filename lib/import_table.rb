@@ -2,7 +2,8 @@
 
 require 'roo'
 require 'roo-xls'
-
-require_relative 'import_table/delimiter'
-require_relative 'import_table/mime'
-require_relative 'import_table/workbook'
+require 'import_table/delimiter'
+require 'import_table/errors'
+require 'import_table/mime'
+require 'import_table/version'
+require 'import_table/workbook'
