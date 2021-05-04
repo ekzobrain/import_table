@@ -5,9 +5,13 @@ require:
 AllCops:
   TargetRubyVersion: 2.6
   NewCops: enable
+  SuggestExtensions: false
+#  DisabledByDefault: true
 
-Metrics/LineLength:
-  Max: 120
+Performance:
+  Exclude:
+    - '**/test/**/*'
+    - '**/spec/**/*'
 
 Metrics/MethodLength:
   Max: 15
@@ -29,3 +33,6 @@ Layout/HashAlignment:
 
 Layout/ExtraSpacing:
   Enabled: false
+
+Layout/LineLength:
+  Max: 120
