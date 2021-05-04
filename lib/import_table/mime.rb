@@ -34,7 +34,12 @@ module ImportTable
     # Defining field separator
     # @return [String,Nil]
     def delimiter?
-      @mime[0] == 'application/csv' ? ',' : ImportTable::Delimiter.type(@file)
+      case @mime[0]
+      when 'application/csv'
+        ','
+      when 'text/plain'
+        ImportTable::Delimiter.type(@file)
+      end
     end
 
     # Defining file encoding
