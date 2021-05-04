@@ -1,23 +1,25 @@
 module ImportTable
   class Delimiter
-    class << self
-      DELIMITERS = [';', ':', '|', "\'\t\'"].freeze
+    DELIMITERS = [';', ':', '|', "\'\t\'"].freeze
 
+    class << self
+      # Define the delimiter used in csv
+      # @param [String|StringIO]
+      # @return [Nil|String]
       def type(file)
         fr = first_row(file)
-        p fr
-        p DELIMITERS.reduce({}) { |res, deli| res.merge deli => fr.count(deli) }
-        # .sort { |a, b| b[1] <=> a[1] }
+
+        delim = DELIMITERS.reduce({}) { |res, deli| res.merge deli => fr.count(deli) }.max_by(&:last)
+        delim.last.zero? ? nil : delim.first
       end
 
       private
 
+      # Read the first line in csv
+      # @param [String|StringIO]
+      # @return [File]
       def first_row(file)
-        if file.instance_of?(StringIO)
-          file.first
-        else
-          File.open(file, &:readline)
-        end
+        file.instance_of?(StringIO) ? file.first : File.open(file, &:readline)
       end
     end
   end
