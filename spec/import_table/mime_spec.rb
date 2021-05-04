@@ -54,6 +54,12 @@ describe ImportTable::Mime do
         expect(described_class.new(get_file(param[:file])).delimiter?).to eq(param[:expect])
       end
     end
+
+    it 'no separator for non csv file' do
+      param = TEST_MIMETYPE['Define file type - > .xls']
+
+      expect(described_class.new(get_file(param[:file])).delimiter?).to eq(nil)
+    end
   end
 
   describe '.encoding?' do
