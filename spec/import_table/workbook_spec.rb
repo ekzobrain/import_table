@@ -1,6 +1,25 @@
 require_relative '../spec_helper'
 # require 'rspec/context/private'
 
+TEST_SHEETS_INFO = {
+  default_sheet: nil, sheets_count: 2, sheets_name: %w[Sheet1 Sheet2], sheet_current: 'Sheet1', sheets: {
+    'Sheet1' => {
+      first_row: 1, last_row: 10, first_column: 1, last_column: 8, first_column_literal: 'A', last_column_literal: 'H'
+    },
+    'Sheet2' => {
+      first_row: 1, last_row: 4, first_column: 1, last_column: 8, first_column_literal: 'A', last_column_literal: 'H'
+    }
+  }
+}.freeze
+
+TEST_SHEETS_DEFAULT = {
+  default_sheet: 'Sheet2', sheets_count: 2, sheets_name: %w[Sheet1 Sheet2], sheet_current: 'Sheet2', sheets: {
+    'Sheet2' => {
+      first_row: 1, last_row: 4, first_column: 1, last_column: 8, first_column_literal: 'A', last_column_literal: 'H'
+    }
+  }
+}.freeze
+
 # rubocop:disable Metrics/BlockLength
 describe ImportTable::Workbook do
   # xls with two sheets
@@ -9,6 +28,8 @@ describe ImportTable::Workbook do
   let(:csv_eo_wd) { described_class.new(get_file('file_example_CSV_10_comma_de.csv')) }
 
   describe '.new' do
+    let(:f_xls2s) { get_file('file_example_XLS_10_2s.xls') }
+
     it 'Creates an instance' do
       expect(csv_eo_wd).to be_a(described_class)
     end
@@ -31,9 +52,28 @@ describe ImportTable::Workbook do
       expect(wb.options).to include({ extension: :csv, csv_options: { col_sep: "\t" } })
     end
 
-    it 'Take sheets info' do
-      sheets_info = { sheets_count: 2, sheets_name: %w[Sheet1 Sheet2], sheet_current: 'Sheet1' }
-      expect(xls_w2s.sheets_info).to include(sheets_info)
+    it 'Sheets info 1 - full info' do
+      expect(xls_w2s.info).to eq(TEST_SHEETS_INFO)
+    end
+
+    it 'Sheets info 2 - only default sheet info (by number)' do
+      wb = described_class.new(f_xls2s, { default_sheet: 2 })
+
+      expect(wb.info).to eq(TEST_SHEETS_DEFAULT)
+    end
+
+    it 'Sheets info 3 - only default sheet info (by name)' do
+      wb = described_class.new(f_xls2s, { default_sheet: 'Sheet2' })
+
+      expect(wb.info).to eq(TEST_SHEETS_DEFAULT)
+    end
+
+    it 'Sheets info 4 - out of range' do
+      expect { described_class.new(f_xls2s, { default_sheet: 3 }) }.to raise_error(ImportTable::SheetNotFound)
+    end
+
+    it 'Sheets info 5 - not in list' do
+      expect { described_class.new(f_xls2s, { default_sheet: 'ts' }) }.to raise_error(ImportTable::SheetNotFound)
     end
   end
 
@@ -41,25 +81,31 @@ describe ImportTable::Workbook do
     it 'Change current sheet by sheet name' do
       xls_w2s.preview(current_sheet: 'Sheet2')
 
-      expect(xls_w2s.sheets_info).to include(sheet_current: 'Sheet2')
+      expect(xls_w2s.info).to include(sheet_current: 'Sheet2')
     end
 
     it 'Change current sheet by sheet index' do
-      xls_w2s.preview(current_sheet: 1)
+      xls_w2s.preview(current_sheet: 2)
 
-      expect(xls_w2s.sheets_info).to include(sheet_current: 'Sheet2')
+      expect(xls_w2s.info).to include(sheet_current: 'Sheet2')
     end
 
     it 'Read xls row 2 ' do
       rows = xls_w2s.preview
-      p rows
-      expect(rows[1][2..4]).to eq(['Hashimoto', 'Female', 'Great Britain'])
+
+      expect(rows[1][2 .. 4]).to eq(['Hashimoto', 'Female', 'Great Britain'])
     end
 
     it 'Read csv row 2 ' do
       rows = csv_eo_wd.preview
-      p rows
-      expect(rows[2][2..4]).to eq(%w[Gent Männlich Frankreich])
+
+      expect(rows[2][2 .. 4]).to eq(%w[Gent Männlich Frankreich])
+    end
+
+    it 'Verify last_row' do
+      rows = csv_eo_wd.preview(last_row: 112).last
+
+      expect(rows).to eq(['9', 'Vincenza', 'Weiland', 'Weiblich', 'Vereinigte Staaten', '40', '21/05/2015', '6548'])
     end
   end
 end

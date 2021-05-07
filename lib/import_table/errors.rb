@@ -6,4 +6,6 @@ module ImportTable
   class FileCannotOpen < Error; end
 
   class UnsupportedType < Error; end
+
+  class SheetNotFound < Error; end
 end

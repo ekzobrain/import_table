@@ -36,3 +36,6 @@ Layout/ExtraSpacing:
 
 Layout/LineLength:
   Max: 120
+
+Layout/SpaceInsideRangeLiteral:
+  Enabled: false
