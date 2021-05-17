@@ -2,6 +2,8 @@ module ImportTable
   class Workbook
     attr_reader :options, :settings, :info
 
+    FILE_TYPES = %i[csv csv xls xlsx ods].freeze
+
     # @param file [String|StringIO]:
     # @param options [Hash]:
     # @attribute:
@@ -39,15 +41,7 @@ module ImportTable
     private
 
     def open
-      @workbook =
-        case @options[:extension]
-        when :csv
-          Roo::CSV.new(@file, @options)
-        when :xls
-          Roo::Spreadsheet.open(@file, @options)
-        when :xlsx
-          Roo::Excelx.new(@file, @options)
-        end
+      @workbook = Roo::Spreadsheet.open(@file, @options)
 
       info!
     end
@@ -103,7 +97,6 @@ module ImportTable
     # @return [String]
     def verify_sheet_name(name)
       if name.is_a?(Integer)
-        p name
         raise SheetNotFound, "Sheet index '#{name}' out of range" unless @info[:sheets_count] >= name
 
         @workbook.sheets[name - 1]
@@ -123,22 +116,40 @@ module ImportTable
 
     # Checks options for reading a file.
     def review_options
-      @info = { default_sheet: @options.delete(:default_sheet) }
+      @info                = { default_sheet: @options.delete(:default_sheet) }
+      @options[:extension] = :csv if @options[:csv_options]&.include?(:col_sep) && @options[:extension] != :csv
 
-      if @options.empty?
-        create_options
-      elsif @options[:csv_options]&.include?(:col_sep) && @options[:extension] != :csv
-        @options.merge!(extension: :csv)
+      check_extension
+      check_delimiter
+    end
+
+    def check_extension
+      if @file.instance_of?(StringIO)
+        raise MissingRequiredOption, 'extension' unless @options.include?(:extension)
+      else
+        @options[:extension] = Roo::Spreadsheet.extension_for(@file, @options)
       end
+      raise UnsupportedFileType, @options[:extension] unless FILE_TYPES.include?(@options[:extension])
+    end
+
+    def check_delimiter
+      return unless @options[:extension] == :csv
+      return if @options[:csv_options]&.include?(:col_sep)
+
+      delim = ImportTable::Delimiter.type(@file)
+      return unless delim
+
+      @options[:csv_options]           = {} unless @options.include?(:csv_options)
+      @options[:csv_options][:col_sep] = delim
     end
 
     # Creates parameters for reading the file.
     # Detect file type and delimiter for csv files.
     def create_options
-      mime = ImportTable::Mime.new(@file)
-
-      @options[:extension] = mime.type?
-      @options.merge!(csv_options: { col_sep: mime.delimiter? }) if mime.delimiter?
+      # mime = ImportTable::Mime.new(@file)
+      #
+      # @options[:extension] = mime.type?
+      # @options.merge!(csv_options: { col_sep: mime.delimiter? }) if mime.delimiter?
     end
   end
 end

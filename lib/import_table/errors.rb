@@ -5,7 +5,9 @@ module ImportTable
   # Raised when ImportTable::Mime cannot open file
   class FileCannotOpen < Error; end
 
-  class UnsupportedType < Error; end
+  class UnsupportedFileType < Error; end
+
+  class MissingRequiredOption < Error; end
 
   class SheetNotFound < Error; end
 end

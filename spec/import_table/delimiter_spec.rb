@@ -1,6 +1,7 @@
 require_relative '../spec_helper'
 
 TEST_DELIMITERS = {
+  'Define delimiter -> comma'     => { expect: ',', file: 'file_example_CSV_10_comma.csv' },
   'Define delimiter -> bar'       => { expect: '|', file: 'file_example_CSV_10_bar.csv' },
   'Define delimiter -> colon'     => { expect: ':', file: 'file_example_CSV_10_colon.csv' },
   'Define delimiter -> semicolon' => { expect: ';', file: 'file_example_CSV_10_semicolon.csv' },
@@ -18,7 +19,7 @@ describe ImportTable::Delimiter do
 
     it 'Define delimiter from StringIO' do
       param          = TEST_DELIMITERS['Define delimiter -> semicolon']
-      test_delimiter = described_class.type(StringIO.new(File.open(get_file(param[:file])).read))
+      test_delimiter = described_class.type(get_string_io(param[:file]))
 
       expect(test_delimiter).to eq(param[:expect])
     end

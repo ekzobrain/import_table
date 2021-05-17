@@ -1,6 +1,6 @@
 module ImportTable
   class Delimiter
-    DELIMITERS = [';', ':', '|', "\'\t\'"].freeze
+    DELIMITERS = [',', ';', ':', '|', "\'\t\'"].freeze
 
     class << self
       # Define the delimiter used in csv

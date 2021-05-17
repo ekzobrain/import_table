@@ -34,22 +34,43 @@ describe ImportTable::Workbook do
       expect(csv_eo_wd).to be_a(described_class)
     end
 
-    it 'Review options 1 - empty options for csv with delimiter' do
+    it 'Review options for File 1 - empty options for csv with delimiter' do
       wb = csv_eo_wd
 
-      expect(wb.options).to eq({ extension: :csv, csv_options: { col_sep: ',' } })
+      expect(wb.options).to eq({ csv_options: { col_sep: ',' }, file_warning: :ignore })
     end
 
-    it 'Review options 2 - empty options for csv without delimiter' do
-      wb = described_class.new(get_file('file_example_CSV_10_without_delimiter.csv'))
-
-      expect(wb.options).to eq({ extension: :csv })
-    end
-
-    it 'Review options 3 - with options csv_options: {col_sep:}' do
+    it 'Review options for File 2 - with options csv_options: {col_sep:}' do
       wb = described_class.new(get_file('file_example_TSV_10.tsv'), { csv_options: { col_sep: "\t" } })
 
-      expect(wb.options).to include({ extension: :csv, csv_options: { col_sep: "\t" } })
+      expect(wb.options).to include({ csv_options: { col_sep: "\t" } })
+    end
+
+    it 'Review options for File 3 - empty options for csv without delimiter' do
+      wb = described_class.new(get_file('file_example_CSV_10_without_delimiter.csv'))
+
+      expect(wb.info[:sheets]['default']).to include({ last_row: 10, last_column_literal: 'A' })
+    end
+
+    it 'Review options for File 4 - with options for unsupported file' do
+      expect { described_class.new(get_file('file_example_RTF_100kB.rtf')) }
+        .to raise_error(ImportTable::UnsupportedFileType)
+    end
+
+    it 'Review options for StringIO 1 - with options' do
+      wb = described_class.new(get_string_io('file_example_CSV_10_semicolon.csv'), { extension: :csv })
+
+      expect(wb.options).to eq({ csv_options: { col_sep: ';' }, file_warning: :ignore })
+    end
+
+    it 'Review options for StringIO 2 - without options' do
+      expect { described_class.new(get_string_io('file_example_CSV_10_semicolon.csv')) }
+        .to raise_error(ImportTable::MissingRequiredOption)
+    end
+
+    it 'Review options for StringIO 3 - with options for unsupported file' do
+      expect { described_class.new(get_string_io('file_example_CSV_10_semicolon.csv'), extension: :png) }
+        .to raise_error(ImportTable::UnsupportedFileType)
     end
 
     it 'Sheets info 1 - full info' do

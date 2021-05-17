@@ -19,7 +19,6 @@ Gem::Specification.new do |spec|
 
   spec.add_dependency 'roo', '~> 2.8.0'
   spec.add_dependency 'roo-xls', '~> 1.2'
-  spec.add_dependency 'ruby-filemagic', '~> 0.7.2'
 
   spec.add_development_dependency 'rake', '~>13'
   spec.add_development_dependency 'rspec', '~>3.6'
