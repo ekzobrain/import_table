@@ -4,10 +4,10 @@ require_relative '../spec_helper'
 TEST_SHEETS_INFO = {
   default_sheet: nil, sheets_count: 2, sheets_name: %w[Sheet1 Sheet2], sheet_current: 'Sheet1', sheets: {
     'Sheet1' => {
-      first_row: 1, last_row: 10, first_column: 1, last_column: 8, first_column_literal: 'A', last_column_literal: 'H'
+      first_row: 1, last_row: 10, first_column: 0, last_column: 7, first_column_literal: 'A', last_column_literal: 'H'
     },
     'Sheet2' => {
-      first_row: 1, last_row: 4, first_column: 1, last_column: 8, first_column_literal: 'A', last_column_literal: 'H'
+      first_row: 1, last_row: 4, first_column: 0, last_column: 7, first_column_literal: 'A', last_column_literal: 'H'
     }
   }
 }.freeze
@@ -15,7 +15,7 @@ TEST_SHEETS_INFO = {
 TEST_SHEETS_DEFAULT = {
   default_sheet: 'Sheet2', sheets_count: 2, sheets_name: %w[Sheet1 Sheet2], sheet_current: 'Sheet2', sheets: {
     'Sheet2' => {
-      first_row: 1, last_row: 4, first_column: 1, last_column: 8, first_column_literal: 'A', last_column_literal: 'H'
+      first_row: 1, last_row: 4, first_column: 0, last_column: 7, first_column_literal: 'A', last_column_literal: 'H'
     }
   }
 }.freeze
@@ -100,13 +100,13 @@ describe ImportTable::Workbook do
 
   describe '.preview' do
     it 'Change current sheet by sheet name' do
-      xls_w2s.preview(current_sheet: 'Sheet2')
+      xls_w2s.preview(sheet: 'Sheet2')
 
       expect(xls_w2s.info).to include(sheet_current: 'Sheet2')
     end
 
     it 'Change current sheet by sheet index' do
-      xls_w2s.preview(current_sheet: 2)
+      xls_w2s.preview(sheet: 2)
 
       expect(xls_w2s.info).to include(sheet_current: 'Sheet2')
     end

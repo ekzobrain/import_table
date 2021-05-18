@@ -1,8 +1,12 @@
+require 'import_table/sheet'
+require 'import_table/options'
+
 module ImportTable
   class Workbook
-    attr_reader :options, :settings, :info
+    include Options
+    include Sheet
 
-    FILE_TYPES = %i[csv csv xls xlsx ods].freeze
+    attr_reader :options, :settings, :info
 
     # @param file [String|StringIO]:
     # @param options [Hash]:
@@ -18,24 +22,40 @@ module ImportTable
       open
     end
 
-    def read(settings = {})
-      change_sheet(settings)
+    # Read N || 10 rows for preview
+    # @param settings [Hash]:
+    #    sheet [Integer|String] - number or name of sheet
+    #    first_row [Integer] - first reading row (default 2);
+    #    last_row [Integer] - last reading row (default 12).
+    #    mapping_type [Symbol] - :Hash or :Array
+    #    mapping [Hash] - schema
+    #    -
+    # @return [Array|Yield] - rows.
+    def read(settings = {}, &block)
+      @settings = settings
+      change_sheet(settings[:sheet])
+      verify_rows_settings(:read)
+      prepare_mapping if @settings.include?(:mapping)
 
-      settings[:first_row].upto(settings[:last_row]) { |line| yield @workbook.row(line) }
+      if block
+        rows_streaming(@settings[:first_row], @settings[:last_row], &block)
+      else
+        rows(@settings[:first_row], @settings[:last_row])
+      end
     end
 
-    #  Sets the first and last line for preview
-    # (current: first = 1, last = 7 )
+    # Read N || 10 rows for preview
     # @param settings [Hash]:
-    #    first_row;
-    #    last_row.
+    #    sheet [Integer|String] - number or name of sheet
+    #    first_row_preview [Integer] - first reading row (default 2);
+    #    last_row_preview [Integer] - last reading row (default 11).
+    # @return [Array] - rows.
     def preview(settings = {})
-      change_sheet(settings.delete(:current_sheet))
+      @settings = settings
+      change_sheet(settings[:sheet])
+      verify_rows_settings(:preview)
 
-      first_row = settings[:first_row] ? verify_max_row(settings[:first_row]) : verify_max_row(2)
-      last_row  = settings[:last_row] ? verify_max_row(settings[:last_row]) : verify_max_row(10)
-
-      first_row.upto(last_row).map { |line| @workbook.row(line) }
+      rows(@settings[:first_row_preview], @settings[:last_row_preview])
     end
 
     private
@@ -46,110 +66,74 @@ module ImportTable
       info!
     end
 
-    # Take information about sheets.
-    def info!
-      @info.merge!(
-        sheets_count:  @workbook.sheets.count,
-        sheets_name:   @workbook.sheets,
-        sheet_current: @workbook.default_sheet,
-        sheets:        {}
-      )
-
-      change_sheet(@info[:default_sheet])
-      sheets_info
-    end
-
-    # Collects information about sheets.
-    # If set default_sheet, collect only for default.
-    def sheets_info
-      if @info[:default_sheet]
-        @info[:default_sheet] = verify_sheet_name(@info[:default_sheet])
-        @info[:sheets].merge!(sheet_info(@info[:default_sheet]))
-      else
-        @info[:sheets_name].each { |name| @info[:sheets].merge!(sheet_info(name)) }
-        @workbook.default_sheet = @info[:sheet_current]
-      end
-    end
-
-    def sheet_info(name)
-      @workbook.default_sheet = name
-      {
-        name => {
-          first_row:            @workbook.first_row,
-          last_row:             @workbook.last_row,
-          first_column:         @workbook.first_column,
-          last_column:          @workbook.last_column,
-          first_column_literal: ::Roo::Utils.number_to_letter(@workbook.first_column),
-          last_column_literal:  ::Roo::Utils.number_to_letter(@workbook.last_column)
-        }
-      }
-    end
-
-    def change_sheet(name)
-      return unless name
-
-      @info[:sheet_current] = @workbook.default_sheet = verify_sheet_name(name)
-    end
-
-    # Checks the name or number of a sheet in the sheets list.
-    # Return valid name.
-    # @param name [String|Integer]
-    # @return [String]
-    def verify_sheet_name(name)
-      if name.is_a?(Integer)
-        raise SheetNotFound, "Sheet index '#{name}' out of range" unless @info[:sheets_count] >= name
-
-        @workbook.sheets[name - 1]
-      else
-        unless @info[:sheets_name].include?(name)
-          raise SheetNotFound, "Sheet name '#{name}' not in list #{@info[:sheets_name]}"
+    def rows(first_row, last_row)
+      if @settings.include?(:mapping)
+        if @settings[:mapping_type] == :hash
+          first_row.upto(last_row).map { |line| prepare_row_hash(@workbook.row(line), @settings[:mapping]) }
         end
-
-        name
-      end
-    end
-
-    def verify_max_row(row, lag = 0)
-      last_row = @info[:sheets][@info[:sheet_current]][:last_row]
-      row > last_row ? last_row + lag : row
-    end
-
-    # Checks options for reading a file.
-    def review_options
-      @info                = { default_sheet: @options.delete(:default_sheet) }
-      @options[:extension] = :csv if @options[:csv_options]&.include?(:col_sep) && @options[:extension] != :csv
-
-      check_extension
-      check_delimiter
-    end
-
-    def check_extension
-      if @file.instance_of?(StringIO)
-        raise MissingRequiredOption, 'extension' unless @options.include?(:extension)
       else
-        @options[:extension] = Roo::Spreadsheet.extension_for(@file, @options)
+        first_row.upto(last_row).map { |line| @workbook.row(line) }
       end
-      raise UnsupportedFileType, @options[:extension] unless FILE_TYPES.include?(@options[:extension])
     end
 
-    def check_delimiter
-      return unless @options[:extension] == :csv
-      return if @options[:csv_options]&.include?(:col_sep)
-
-      delim = ImportTable::Delimiter.type(@file)
-      return unless delim
-
-      @options[:csv_options]           = {} unless @options.include?(:csv_options)
-      @options[:csv_options][:col_sep] = delim
+    def rows_streaming(first_row, last_row)
+      if @settings.include?(:mapping)
+        if @settings[:mapping_type] == :hash
+          first_row.upto(last_row).each { |line| yield prepare_row_hash(@workbook.row(line), @settings[:mapping]) }
+        end
+      else
+        first_row.upto(last_row).each { |line| yield @workbook.row(line) }
+      end
     end
 
-    # Creates parameters for reading the file.
-    # Detect file type and delimiter for csv files.
-    def create_options
-      # mime = ImportTable::Mime.new(@file)
-      #
-      # @options[:extension] = mime.type?
-      # @options.merge!(csv_options: { col_sep: mime.delimiter? }) if mime.delimiter?
+    def prepare_row_hash(row, mapping)
+      mapping.transform_values { |param| prepare_cell(row, param) }
+    end
+
+    def prepare_cell(row, param)
+      return nil unless param[:column]
+
+      cell_to_type(row[param[:column]], param[:type])
+    end
+
+    def cell_to_type(value, type)
+      case type
+      when 'string'
+        value
+      when 'boolean'
+        bool value
+      when 'integer'
+        Integer(value) if value
+      when 'float'
+        Float(value)
+      when 'date'
+        Date.parse(value)
+      else
+        value
+      end
+    end
+
+    def prepare_mapping
+      @settings[:mapping_type] = :hash unless @settings.include?(:mapping_type)
+
+      @settings[:mapping].each do |_, params|
+        params[:column] = ::Roo::Utils.letter_to_number(params[:column].to_s) - 1 unless params[:column].is_a?(Integer)
+      end
+    end
+
+    def verify_rows_settings(for_method = :read)
+      first, last, last_row =
+        for_method == :read ? [:first_row, :last_row, current_last_row] : [:first_row_preview, :last_row_preview, 11]
+
+      @settings[first] = @settings[first] ? verify_max_row(@settings[first]) : verify_max_row(2)
+      @settings[last]  = @settings[last] ? verify_max_row(@settings[last]) : verify_max_row(last_row)
+    end
+
+    def bool(value)
+      return true if value&.match?(/^(true|t|yes|y|1)$/i)
+      return false if value&.empty? || value&.match?(/^(false|f|no|n|0)$/i)
+
+      nil
     end
   end
 end
