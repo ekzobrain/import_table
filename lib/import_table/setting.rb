@@ -11,7 +11,18 @@ module ImportTable
       verify_rows_settings(for_method)
       @settings = symbolize(@settings)
 
-      prepare_mapping if @settings.include?(:mapping)
+      return unless @settings.include?(:mapping)
+
+      extract_array_mapping if @settings[:mapping].is_a?(Array)
+      prepare_mapping
+    end
+
+    def extract_array_mapping
+      @settings[:mapping] =
+        @settings[:mapping].map do |params|
+          key = params.delete(:to) || params.delete(:title)
+          [key.to_sym, params]
+        end.to_h
     end
 
     def verify_rows_settings(for_method = :read)

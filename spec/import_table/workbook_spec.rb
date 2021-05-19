@@ -254,13 +254,19 @@ describe ImportTable::Workbook do
       end
     end
 
-    it 'Read 10 Symbolize' do
-      xls_w2s
-        .read(mapping_type: :array, mapping: { 'Country' => { 'column' => 'E', 'type' => 'string', 'unique' => true } })
+    it 'Read 10 Symbolize for mapping_type => array' do
+      xls_w2s.read('mapping_type' => 'array',
+                   'mapping'      => { 'Country' => { 'column' => 'E', 'type' => 'string', 'unique' => true } })
 
       expect(xls_w2s.uniques[:Country][:not_unique])
         .to eq({ 'Great Britain' => [8], 'United States' => [5, 6, 7, 9, 10] })
       expect(xls_w2s.uniques[:Country][:not_unique_count]).to eq(6)
+    end
+
+    it 'Read 11 Symbolize convert array in mapping' do
+      xls_w2s.read('mapping_type' => 'array',
+                   'mapping'      => [{ 'to' => 'Country', 'column' => 'E' }])
+      expect(xls_w2s.settings[:mapping]).to eq({ Country: { column: 4 } })
     end
   end
 end

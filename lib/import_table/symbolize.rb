@@ -5,7 +5,7 @@ module ImportTable
       when Hash
         symbolize_recursive(value)
       when Array
-        value.map { |v| transform(v) }
+        value.map { |v| symbolize(v) }
       else
         value
       end
