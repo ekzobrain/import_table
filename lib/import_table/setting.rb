@@ -23,6 +23,7 @@ module ImportTable
     end
 
     def prepare_mapping
+      @settings[:mapping_type] = @settings[:mapping_type].to_sym if @settings[:mapping_type].is_a?(String)
       @settings[:mapping_type] = :hash unless %i[hash array].include?(@settings[:mapping_type])
       @settings[:mapping].each do |name, params|
         letter_to_number(params)

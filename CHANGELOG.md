@@ -16,3 +16,7 @@
 ## [0.1.2] - 2021-05-19
 ### Changed / Added
 * add symbolize for options and settings
+
+## [0.1.3] - 2021-05-19
+### Changed 
+* Fix symbolize mapping_type
