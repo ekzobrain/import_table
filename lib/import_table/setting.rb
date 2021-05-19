@@ -9,6 +9,7 @@ module ImportTable
 
     def review_settings(for_method = :read)
       verify_rows_settings(for_method)
+      @settings = symbolize(@settings)
 
       prepare_mapping if @settings.include?(:mapping)
     end
@@ -51,10 +52,10 @@ module ImportTable
       params[:unique] = name
 
       @uniques[name] = {
-        column: params[:column],
-        not_unique: {},
+        column:           params[:column],
+        not_unique:       {},
         not_unique_count: 0,
-        values: []
+        values:           []
       }
     end
   end

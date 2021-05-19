@@ -3,6 +3,7 @@ require 'import_table/sheet'
 require 'import_table/options'
 require 'import_table/row'
 require 'import_table/setting'
+require 'import_table/symbolize'
 
 module ImportTable
   class Workbook
@@ -11,6 +12,7 @@ module ImportTable
     include Sheet
     include Row
     include Setting
+    include Symbolize
 
     attr_reader :options, :settings, :info, :uniques
 
@@ -21,7 +23,8 @@ module ImportTable
     # * csv_options: {col_sep: "\t"}
     # * default_sheet: [Integer|String]
     def initialize(file, options = {})
-      @options = options.slice(:extension, :csv_options, :default_sheet)
+      @options = symbolize(options)
+
       @file    = file
       @uniques = {}
       review_options

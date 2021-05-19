@@ -97,6 +97,20 @@ describe ImportTable::Workbook do
     it 'Sheets info 5 - not in list' do
       expect { described_class.new(f_xls2s, { default_sheet: 'ts' }) }.to raise_error(ImportTable::SheetNotFound)
     end
+
+    it 'Symbolize options 1 - without csv_options' do
+      options = { 'extension' => 'csv' }
+      wb      = described_class.new(get_string_io('file_example_CSV_10_semicolon.csv'), options)
+
+      expect(wb.options).to eq({ csv_options: { col_sep: ';' }, file_warning: :ignore })
+    end
+
+    it 'Symbolize options 2 - with csv_options' do
+      options = { 'extension' => 'csv', 'csv_options' => { 'col_sep' => ';' } }
+      wb      = described_class.new(get_string_io('file_example_CSV_10_semicolon.csv'), options)
+
+      expect(wb.options).to eq({ csv_options: { col_sep: ';' }, file_warning: :ignore })
+    end
   end
 
   describe '.preview' do
@@ -209,7 +223,7 @@ describe ImportTable::Workbook do
 
     # G to String, format: DateTime, strftime - %Y-%m-%d %H:%M:%S
     it 'Read 7 (base) - with mapping: G to string, format: date_time, with strftime manual' do
-      mapping = { Date: { column: 6, type: :string, format: 'date_time', strftime: '%Y-%m-%d %H:%M:%S' } }
+      mapping = { Date: { column: 6, type: 'string', format: 'date_time', strftime: '%Y-%m-%d %H:%M:%S' } }
       rows    = xls_w2s.read(mapping_type: :hash, mapping: mapping)
 
       expect(rows).to eq(expected_rows.map { |item| { Date: Date.parse(item[6]).strftime('%Y-%m-%d %H:%M:%S') } })
@@ -238,6 +252,15 @@ describe ImportTable::Workbook do
         expect(xls_w2s.uniques[:Country][:not_unique_count]).to eq([0, 0, 0, 1, 2, 3, 4, 5, 6][i])
         i += 1
       end
+    end
+
+    it 'Read 10 Symbolize' do
+      xls_w2s
+        .read(mapping_type: :array, mapping: { 'Country' => { 'column' => 'E', 'type' => 'string', 'unique' => true } })
+
+      expect(xls_w2s.uniques[:Country][:not_unique])
+        .to eq({ 'Great Britain' => [8], 'United States' => [5, 6, 7, 9, 10] })
+      expect(xls_w2s.uniques[:Country][:not_unique_count]).to eq(6)
     end
   end
 end

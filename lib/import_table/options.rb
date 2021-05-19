@@ -6,7 +6,9 @@ module ImportTable
 
     # Checks options for reading a file.
     def review_options
+      @options             = @options.slice(:extension, :csv_options, :default_sheet)
       @info                = { default_sheet: @options.delete(:default_sheet) }
+      @options[:extension] = @options[:extension].to_sym if @options[:extension].is_a?(String)
       @options[:extension] = :csv if @options[:csv_options]&.include?(:col_sep) && @options[:extension] != :csv
 
       check_extension

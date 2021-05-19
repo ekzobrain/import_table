@@ -12,3 +12,7 @@
 ### Changed / Added
 * update: read; convert string.
 * Add: convert Date & DateTime; uniques check
+
+## [0.1.2] - 2021-05-19
+### Changed / Added
+* add symbolize for options and settings
