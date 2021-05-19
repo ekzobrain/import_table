@@ -21,6 +21,7 @@ TEST_SHEETS_DEFAULT = {
 }.freeze
 
 # rubocop:disable Metrics/BlockLength
+# rubocop:disable RSpec/MultipleExpectations
 describe ImportTable::Workbook do
   # xls with two sheets
   let(:xls_w2s) { described_class.new(get_file('file_example_XLS_10_2s.xls')) }
@@ -123,11 +124,122 @@ describe ImportTable::Workbook do
       expect(rows[2][2 .. 4]).to eq(%w[Gent Männlich Frankreich])
     end
 
-    it 'Verify last_row' do
+    it 'Check last_row' do
       rows = csv_eo_wd.preview(last_row: 112).last
 
       expect(rows).to eq(['9', 'Vincenza', 'Weiland', 'Weiblich', 'Vereinigte Staaten', '40', '21/05/2015', '6548'])
     end
   end
+
+  describe '.read' do
+    let(:expected_rows) do
+      [
+        [1.0, 'Dulce', 'Abril', 'Female', 'United States', 32.0, '15/10/2017', 1562.0],
+        [2.0, 'Mara', 'Hashimoto', 'Female', 'Great Britain', 25.0, '16/08/2016', 1582.0],
+        [3.0, 'Philip', 'Gent', 'Male', 'France', 36.0, '21/05/2015', 2587.0],
+        [4.0, 'Kathleen', 'Hanner', 'Female', 'United States', 25.0, '15/10/2017', 3549.0],
+        [5.0, 'Nereida', 'Magwood', 'Female', 'United States', 58.0, '16/08/2016', 2468.0],
+        [6.0, 'Gaston', 'Brumm', 'Male', 'United States', 24.0, '21/05/2015', 2554.0],
+        [7.0, 'Etta', 'Hurn', 'Female', 'Great Britain', 56.0, '15/10/2017', 3598.0],
+        [8.0, 'Earlean', 'Melgar', 'Female', 'United States', 27.0, '16/08/2016', 2456.0],
+        [9.0, 'Vincenza', 'Weiland', 'Female', 'United States', 40.0, '21/05/2015', 6548.0]
+      ]
+    end
+
+    let(:unique_test_mapping) do
+      {
+        Country:  { column: 'E', type: :string, unique: true },
+        LastName: { column: 'C', type: :string, unique: true }
+      }
+    end
+
+    it 'Read 1 (base) - without mapping' do
+      expect(xls_w2s.read).to eq(expected_rows)
+    end
+
+    # 'Test Integer'
+    # A Float to Integer, F Float to Integer
+    it 'Read 2.1 (base) - with mapping: result - hash; A & F to integer - without format' do
+      mapping = { Index: { column: :A, type: :integer }, Age: { column: :F, type: :integer } }
+      rows    = xls_w2s.read(mapping_type: :hash, mapping: mapping)
+
+      expect(rows).to eq(expected_rows.map { |item| { Index: Integer(item[0]), Age: Integer(item[5]) } })
+    end
+
+    it 'Read 2.2 (streaming) - with mapping: result - hash; A & F to integer - without format' do
+      i = 0
+      xls_w2s.read(mapping_type: :hash, mapping: { Age: { column: :F, type: :integer } }) do |row|
+        expect(row).to eq({ Age: Integer(expected_rows[i][5]) })
+        i += 1
+      end
+    end
+
+    # 'Test String'
+    # A to String, G to String without format
+    it 'Read 3 (base) - with mapping: result - array; A & G to string - without format' do
+      mapping = { Index: { column: :A, type: :string }, Date: { column: :G, type: :string } }
+      rows    = xls_w2s.read(mapping_type: :array, mapping: mapping)
+
+      expect(rows).to eq(expected_rows.map { |item| [String(item[0]), String(item[6])] })
+    end
+
+    # G to String, format: Date, strftime - RFC 3339, section 5.6 (default)
+    it 'Read 4 (base) - with mapping: G to string, format: date, with default strftime' do
+      mapping = { Date: { column: 6, type: :string, format: 'date' } }
+      rows    = xls_w2s.read(mapping_type: :hash, mapping: mapping)
+
+      expect(rows).to eq(expected_rows.map { |item| { Date: Date.parse(item[6]).strftime('%Y-%m-%d') } })
+    end
+
+    # G to String, format: Date, strftime - '%Y.%m.%d'
+    it 'Read 5 (base) - with mapping: G to string, format: date, with strftime manual' do
+      mapping = { Date: { column: 6, type: :string, format: :date, strftime: '%Y.%m.%d' } }
+      rows    = xls_w2s.read(mapping_type: :hash, mapping: mapping)
+
+      expect(rows).to eq(expected_rows.map { |item| { Date: Date.parse(item[6]).strftime('%Y.%m.%d') } })
+    end
+
+    # G to String, format: DateTime, strftime - RFC 3339, section 5.6 (default)
+    it 'Read 6 (base) - with mapping: G to string, format: date_time, with default strftime' do
+      mapping = { Date: { column: 6, type: :string, format: 'date_time' } }
+      rows    = xls_w2s.read(mapping_type: :hash, mapping: mapping)
+
+      expect(rows).to eq(expected_rows.map { |item| { Date: Date.parse(item[6]).strftime('%Y-%m-%dT%H:%M:%SZ') } })
+    end
+
+    # G to String, format: DateTime, strftime - %Y-%m-%d %H:%M:%S
+    it 'Read 7 (base) - with mapping: G to string, format: date_time, with strftime manual' do
+      mapping = { Date: { column: 6, type: :string, format: 'date_time', strftime: '%Y-%m-%d %H:%M:%S' } }
+      rows    = xls_w2s.read(mapping_type: :hash, mapping: mapping)
+
+      expect(rows).to eq(expected_rows.map { |item| { Date: Date.parse(item[6]).strftime('%Y-%m-%d %H:%M:%S') } })
+    end
+
+    # Unique
+    it 'Read 8 (base) - with mapping: C to string, without not_unique cell' do
+      xls_w2s.read(mapping_type: :hash, mapping: unique_test_mapping)
+
+      expect(xls_w2s.uniques[:LastName][:not_unique]).to eq({})
+      expect(xls_w2s.uniques[:LastName][:not_unique_count]).to eq(0)
+      expect(xls_w2s.uniques[:LastName][:column]).to eq(2)
+    end
+
+    it 'Read 9.1 (base) - with mapping: E to string, with not_unique cell' do
+      xls_w2s.read(mapping_type: :array, mapping: unique_test_mapping)
+
+      expect(xls_w2s.uniques[:Country][:not_unique])
+        .to eq({ 'Great Britain' => [8], 'United States' => [5, 6, 7, 9, 10] })
+      expect(xls_w2s.uniques[:Country][:not_unique_count]).to eq(6)
+    end
+
+    it 'Read 9.2 (streaming) - with mapping: E to string, with not_unique cell' do
+      i = 0
+      xls_w2s.read(mapping_type: :array, mapping: unique_test_mapping) do
+        expect(xls_w2s.uniques[:Country][:not_unique_count]).to eq([0, 0, 0, 1, 2, 3, 4, 5, 6][i])
+        i += 1
+      end
+    end
+  end
 end
+# rubocop:enable RSpec/MultipleExpectations
 # rubocop:enable Metrics/BlockLength
