@@ -21,7 +21,7 @@
 ### Changed 
 * Fix symbolize mapping_type
 
-## [0.1.3] - 2021-05-19
+## [0.1.4] - 2021-05-19
 ### Changed
 * Fix symbolize array
 * Add Convert array mapping
