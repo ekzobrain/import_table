@@ -30,3 +30,7 @@
 ### Changed / Added
 * Fix settings (nil)
 * Add regexp replace for column
+
+## [0.1.6] - 2021-05-21
+### Changed / Added
+* Fix settings (nil)
