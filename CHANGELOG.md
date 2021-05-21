@@ -25,3 +25,8 @@
 ### Changed
 * Fix symbolize array
 * Add Convert array mapping
+
+## [0.1.5] - 2021-05-21
+### Changed / Added
+* Fix settings (nil)
+* Add regexp replace for column

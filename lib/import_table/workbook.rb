@@ -41,7 +41,7 @@ module ImportTable
     #    -
     # @return [Array|Yield] - rows.
     def read(settings = {}, &block)
-      @settings = settings
+      @settings = settings || {}
       change_sheet(settings[:sheet])
 
       review_settings(:read)
@@ -58,7 +58,7 @@ module ImportTable
     #    last_row_preview [Integer] - last reading row (default 11).
     # @return [Array] - rows.
     def preview(settings = {})
-      @settings = settings
+      @settings = settings || {}
       change_sheet(settings[:sheet])
       verify_rows_settings(:preview)
       range = @settings[:first_row_preview].upto(@settings[:last_row_preview])

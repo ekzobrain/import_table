@@ -41,6 +41,7 @@ module ImportTable
         param_to_sym(params)
         default_strftime(params)
         unique_set(name, params)
+        regexp_set(params)
       end
     end
 
@@ -69,6 +70,31 @@ module ImportTable
         not_unique_count: 0,
         values:           []
       }
+    end
+
+    def regexp_set(params)
+      return unless params[:regexp_search]
+
+      validate_regexp(params)
+      validate_replace(params)
+      value_to_sym(params, :regexp_type)
+      params[:regexp_type] = :sub unless params[:regexp_type] && %i[sub gsub].include?(params[:regexp_type])
+    end
+
+    def validate_regexp(params)
+      params[:regexp_search] = Regexp.new(params[:regexp_search])
+    rescue RegexpError => e
+      raise RegexpError, "Invalid regular expression: #{e.message}"
+    end
+
+    def validate_replace(params)
+      return unless params[:regexp_search]
+
+      raise RegexpError, 'No replacement variable.' unless params[:regexp_replace]
+    end
+
+    def value_to_sym(params, params_name)
+      [params_name].each { |i| params[i] = params[i].to_sym if params[i].is_a?(String) }
     end
   end
 end

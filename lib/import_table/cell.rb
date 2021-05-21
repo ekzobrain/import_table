@@ -6,14 +6,21 @@ module ImportTable
       return nil unless param[:column]
 
       result = cell_to_type(row[param[:column]], param)
+      result = regexp_cell(result, param) if param[:regexp_search]
       check_unique(result, param, line)
 
       result
     end
 
-    def cell_to_type(value, param)
-      return unless value
+    def regexp_cell(value, param)
+      if param[:regexp_type] == :sub
+        value.sub(param[:regexp_search], param[:regexp_replace])
+      else
+        value.gsub(param[:regexp_search], param[:regexp_replace])
+      end
+    end
 
+    def cell_to_type(value, param)
       case param[:type]
       when :string
         t_string(value, param)

@@ -167,13 +167,14 @@ describe ImportTable::Workbook do
       }
     end
 
-    it 'Read 1 (base) - without mapping' do
+    let(:reg_fn) { { column: 'B', regexp_search: '^(.).*', regexp_replace: '\1.' } }
+
+    it 'Read 1 - without mapping' do
       expect(xls_w2s.read).to eq(expected_rows)
     end
 
-    # 'Test Integer'
-    # A Float to Integer, F Float to Integer
-    it 'Read 2.1 (base) - with mapping: result - hash; A & F to integer - without format' do
+    # 'Type :integer'
+    it 'Read 2.1 - result - hash; A & F to integer - without format' do
       mapping = { Index: { column: :A, type: :integer }, Age: { column: :F, type: :integer } }
       rows    = xls_w2s.read(mapping_type: :hash, mapping: mapping)
 
@@ -188,17 +189,18 @@ describe ImportTable::Workbook do
       end
     end
 
-    # 'Test String'
+    # 'Type :string'
     # A to String, G to String without format
-    it 'Read 3 (base) - with mapping: result - array; A & G to string - without format' do
+    it 'Read 3.1.1 - result - array; A & G to string - without format' do
       mapping = { Index: { column: :A, type: :string }, Date: { column: :G, type: :string } }
       rows    = xls_w2s.read(mapping_type: :array, mapping: mapping)
 
       expect(rows).to eq(expected_rows.map { |item| [String(item[0]), String(item[6])] })
     end
 
+    # 'Type :string & format: :date || dateTime'
     # G to String, format: Date, strftime - RFC 3339, section 5.6 (default)
-    it 'Read 4 (base) - with mapping: G to string, format: date, with default strftime' do
+    it 'Read 3.2.1 - col G to string, format: date, with default strftime' do
       mapping = { Date: { column: 6, type: :string, format: 'date' } }
       rows    = xls_w2s.read(mapping_type: :hash, mapping: mapping)
 
@@ -206,7 +208,7 @@ describe ImportTable::Workbook do
     end
 
     # G to String, format: Date, strftime - '%Y.%m.%d'
-    it 'Read 5 (base) - with mapping: G to string, format: date, with strftime manual' do
+    it 'Read 3.2.2 - col G to string, format: date, with strftime manual' do
       mapping = { Date: { column: 6, type: :string, format: :date, strftime: '%Y.%m.%d' } }
       rows    = xls_w2s.read(mapping_type: :hash, mapping: mapping)
 
@@ -214,7 +216,7 @@ describe ImportTable::Workbook do
     end
 
     # G to String, format: DateTime, strftime - RFC 3339, section 5.6 (default)
-    it 'Read 6 (base) - with mapping: G to string, format: date_time, with default strftime' do
+    it 'Read 3.2.3 - col G to string, format: date_time, with default strftime' do
       mapping = { Date: { column: 6, type: :string, format: 'date_time' } }
       rows    = xls_w2s.read(mapping_type: :hash, mapping: mapping)
 
@@ -222,15 +224,15 @@ describe ImportTable::Workbook do
     end
 
     # G to String, format: DateTime, strftime - %Y-%m-%d %H:%M:%S
-    it 'Read 7 (base) - with mapping: G to string, format: date_time, with strftime manual' do
+    it 'Read 3.2.4 - col G to string, format: date_time, with strftime manual' do
       mapping = { Date: { column: 6, type: 'string', format: 'date_time', strftime: '%Y-%m-%d %H:%M:%S' } }
       rows    = xls_w2s.read(mapping_type: :hash, mapping: mapping)
 
       expect(rows).to eq(expected_rows.map { |item| { Date: Date.parse(item[6]).strftime('%Y-%m-%d %H:%M:%S') } })
     end
 
-    # Unique
-    it 'Read 8 (base) - with mapping: C to string, without not_unique cell' do
+    # 'Param Unique'
+    it 'Read 4.1 - col C to string, without not_unique cell' do
       xls_w2s.read(mapping_type: :hash, mapping: unique_test_mapping)
 
       expect(xls_w2s.uniques[:LastName][:not_unique]).to eq({})
@@ -238,7 +240,7 @@ describe ImportTable::Workbook do
       expect(xls_w2s.uniques[:LastName][:column]).to eq(2)
     end
 
-    it 'Read 9.1 (base) - with mapping: E to string, with not_unique cell' do
+    it 'Read 4.2 - col E to string, with not_unique cell' do
       xls_w2s.read(mapping_type: :array, mapping: unique_test_mapping)
 
       expect(xls_w2s.uniques[:Country][:not_unique])
@@ -246,7 +248,7 @@ describe ImportTable::Workbook do
       expect(xls_w2s.uniques[:Country][:not_unique_count]).to eq(6)
     end
 
-    it 'Read 9.2 (streaming) - with mapping: E to string, with not_unique cell' do
+    it 'Read 4.3 (streaming) - E to string, with not_unique cell' do
       i = 0
       xls_w2s.read(mapping_type: :array, mapping: unique_test_mapping) do
         expect(xls_w2s.uniques[:Country][:not_unique_count]).to eq([0, 0, 0, 1, 2, 3, 4, 5, 6][i])
@@ -254,7 +256,52 @@ describe ImportTable::Workbook do
       end
     end
 
-    it 'Read 10 Symbolize for mapping_type => array' do
+    # 'Param Regexp'
+    it 'Read 5.1.1 - Settings - Invalid regular expression' do
+      mapping = { mapping: { FN: { column: 'B', regexp_search: '?', regexp_replace: '\1.' } } }
+
+      expect { xls_w2s.read(mapping) }.to raise_error(RegexpError)
+    end
+
+    it 'Read 5.1.2 - Settings - No replacement variable' do
+      mapping = { mapping: { FN: { column: 'B', regexp_search: '?' } } }
+
+      expect { xls_w2s.read(mapping) }.to raise_error(RegexpError)
+    end
+
+    it 'Read 5.2.1 - set regexp_type :sub (default)' do
+      xls_w2s.read(mapping: { FN: reg_fn })
+
+      expect(xls_w2s.settings[:mapping][:FN][:regexp_type]).to eq(:sub)
+    end
+
+    it 'Read 5.2.2 - set regexp_type :gsub (change value type - from string)' do
+      xls_w2s.read(mapping: { FN: reg_fn.merge!(regexp_type: 'gsub') })
+
+      expect(xls_w2s.settings[:mapping][:FN][:regexp_type]).to eq(:gsub)
+    end
+
+    it 'Read 5.2.3 - set regexp_type :sub (default) if wrong type' do
+      xls_w2s.read(mapping: { FN: reg_fn.merge!(regexp_type: :zub) })
+
+      expect(xls_w2s.settings[:mapping][:FN][:regexp_type]).to eq(:sub)
+    end
+
+    it 'Read 5.3.1 - replace with regexp_type :sub ' do
+      rows = xls_w2s.read(mapping_type: :array, mapping: { FN: reg_fn })
+
+      expect(rows).to eq([['D.'], ['M.'], ['P.'], ['K.'], ['N.'], ['G.'], ['E.'], ['E.'], ['V.']])
+    end
+
+    it 'Read 5.3.2 - replace with regexp_type :gsub ' do
+      mapping = { FN: { column: 'B', regexp_search: '([ie])', regexp_replace: '\1.', regexp_type: :gsub } }
+      rows    = xls_w2s.read(mapping_type: :array, mapping: mapping)[2 .. 4]
+
+      expect(rows).to eq([['Phi.li.p'], ['Kathle.e.n'], ['Ne.re.i.da']])
+    end
+
+    # 'Settings Symbolize'
+    it 'Read 6.1 Symbolize for mapping_type => array' do
       xls_w2s.read('mapping_type' => 'array',
                    'mapping'      => { 'Country' => { 'column' => 'E', 'type' => 'string', 'unique' => true } })
 
@@ -263,7 +310,7 @@ describe ImportTable::Workbook do
       expect(xls_w2s.uniques[:Country][:not_unique_count]).to eq(6)
     end
 
-    it 'Read 11 Symbolize convert array in mapping' do
+    it 'Read 6.2 Symbolize convert array in mapping' do
       xls_w2s.read('mapping_type' => 'array',
                    'mapping'      => [{ 'to' => 'Country', 'column' => 'E' }])
       expect(xls_w2s.settings[:mapping]).to eq({ Country: { column: 4 } })

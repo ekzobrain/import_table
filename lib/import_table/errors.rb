@@ -10,4 +10,6 @@ module ImportTable
   class MissingRequiredOption < Error; end
 
   class SheetNotFound < Error; end
+
+  # class RegexpError < Error; end
 end
