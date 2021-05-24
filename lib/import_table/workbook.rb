@@ -16,9 +16,9 @@ module ImportTable
 
     attr_reader :options, :settings, :info, :uniques
 
-    # @param file [String|StringIO]:
+    # @param file [String,StringIO]:
     # @param options [Hash]:
-    # @attribute:
+    # @attribute
     # * extension [Symbol]: - :xls, :xlsx, :ods, :csv
     # * csv_options: {col_sep: "\t"}
     # * default_sheet: [Integer|String]
@@ -60,7 +60,7 @@ module ImportTable
     def preview(settings = {})
       @settings = settings || {}
       change_sheet(@settings[:sheet])
-      verify_rows_settings(:preview)
+      review_settings(:preview)
       range = @settings[:first_row_preview].upto(@settings[:last_row_preview])
 
       rows(range)

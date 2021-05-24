@@ -34,3 +34,8 @@
 ## [0.1.6] - 2021-05-21
 ### Changed / Added
 * Fix settings (nil)
+
+## [0.1.7] - 2021-05-24
+### Changed 
+* Fix review settings for preview
+* Fix param description in init workbook
