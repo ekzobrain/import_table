@@ -20,7 +20,7 @@ module ImportTable
     def extract_array_mapping
       @settings[:mapping] =
         @settings[:mapping].map do |params|
-          key = params.delete(:to) || params.delete(:title)
+          key = params.delete(:to) || params.delete(:title) || params[:column]
           [key.to_sym, params]
         end.to_h
     end
@@ -34,8 +34,8 @@ module ImportTable
     end
 
     def prepare_mapping
-      @settings[:mapping_type] = @settings[:mapping_type].to_sym if @settings[:mapping_type].is_a?(String)
-      @settings[:mapping_type] = :hash unless %i[hash array].include?(@settings[:mapping_type])
+      return_type_set
+
       @settings[:mapping].each do |name, params|
         letter_to_number(params)
         param_to_sym(params)
@@ -43,6 +43,12 @@ module ImportTable
         unique_set(name, params)
         regexp_set(params)
       end
+    end
+
+    def return_type_set
+      @settings[:mapping_type] = @settings[:return_type] if @settings[:return_type]
+      @settings[:mapping_type] = @settings[:mapping_type].to_sym if @settings[:mapping_type].is_a?(String)
+      @settings[:mapping_type] = :hash unless %i[hash array].include?(@settings[:mapping_type])
     end
 
     def letter_to_number(params)
@@ -55,7 +61,7 @@ module ImportTable
 
     def default_strftime(params)
       DEFAULT_STRFTIME.each do |format, value|
-        params[:strftime] = value if params[:format] == format && params[:strftime].nil?
+        params[:strftime] = value if (params[:format] == format || params[:type] == format) && params[:strftime].nil?
       end
     end
 

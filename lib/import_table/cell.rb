@@ -30,7 +30,7 @@ module ImportTable
         t_integer(value)
       when :float
         t_float(value)
-      when :date
+      when :date, :date_time
         t_date(value, param, param[:type])
       else
         value

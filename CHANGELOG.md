@@ -36,6 +36,10 @@
 * Fix settings (nil)
 
 ## [0.1.7] - 2021-05-24
-### Changed 
-* Fix review settings for preview
-* Fix param description in init workbook
+### Changed / Added
+* Fix: 
+  review settings for preview;
+  param description in init workbook;
+  array_mapping (take key from column);
+  type date_time.
+* Added return_type (alias for mapping_type);

@@ -189,11 +189,56 @@ describe ImportTable::Workbook do
       end
     end
 
+    # 'Float'
+    it 'Read 2.3 - result - hash; A & F to float' do
+      mapping = { Index: { column: :A, type: :float }, Age: { column: :F, type: :float } }
+      rows    = xls_w2s.read(mapping_type: :hash, mapping: mapping)
+
+      expect(rows).to eq(expected_rows.map { |item| { Index: Float(item[0]), Age: Float(item[5]) } })
+    end
+
+    # 'Boolean'
+    it 'Read 2.4 - result - hash; b to boolean' do
+      wb   = described_class.new(get_file('file_example_CSV_10_comma_bool.csv'))
+      rows = wb.read(return_type: :array, mapping: [{ column: :B, type: :boolean }])
+
+      expect(rows).to eq([[true], [false], [true], [false], [true], [false], [true], [false], [true], [false]])
+    end
+
+    # 'Date'
+    it 'Read 2.5.1 - col G to type date, default strftime (RFC 3339, section 5.6)' do
+      mapping = { Date: { column: 6, type: :date } }
+      rows    = xls_w2s.read(mapping_type: :hash, mapping: mapping)
+
+      expect(rows).to eq(expected_rows.map { |item| { Date: Date.parse(item[6]).strftime('%Y-%m-%d') } })
+    end
+
+    it 'Read 2.5.2 - col G to type date, strftime manual (Y.m.d)' do
+      mapping = { Date: { column: 6, type: :date, strftime: '%Y.%m.%d' } }
+      rows    = xls_w2s.read(mapping_type: :hash, mapping: mapping)
+
+      expect(rows).to eq(expected_rows.map { |item| { Date: Date.parse(item[6]).strftime('%Y.%m.%d') } })
+    end
+
+    it 'Read 2.5.3 - col G to type date_time, default strftime (RFC 3339, section 5.6)' do
+      mapping = { Date: { column: 6, type: :date_time } }
+      rows    = xls_w2s.read(mapping_type: :hash, mapping: mapping)
+
+      expect(rows).to eq(expected_rows.map { |item| { Date: Date.parse(item[6]).strftime('%Y-%m-%dT%H:%M:%SZ') } })
+    end
+
+    it 'Read 2.5.4 - col G to type date_time, strftime manual (Y-m-d H:M:S)' do
+      mapping = { Date: { column: 6, type: :date_time, strftime: '%Y-%m-%d %H:%M:%S' } }
+      rows    = xls_w2s.read(mapping_type: :hash, mapping: mapping)
+
+      expect(rows).to eq(expected_rows.map { |item| { Date: Date.parse(item[6]).strftime('%Y-%m-%d %H:%M:%S') } })
+    end
+
     # 'Type :string'
     # A to String, G to String without format
     it 'Read 3.1.1 - result - array; A & G to string - without format' do
-      mapping = { Index: { column: :A, type: :string }, Date: { column: :G, type: :string } }
-      rows    = xls_w2s.read(mapping_type: :array, mapping: mapping)
+      mapping = [{ column: :A, type: :string }, { column: :G, type: :string }]
+      rows    = xls_w2s.read(return_type: :array, mapping: mapping)
 
       expect(rows).to eq(expected_rows.map { |item| [String(item[0]), String(item[6])] })
     end
@@ -295,7 +340,8 @@ describe ImportTable::Workbook do
 
     it 'Read 5.3.2 - replace with regexp_type :gsub ' do
       mapping = { FN: { column: 'B', regexp_search: '([ie])', regexp_replace: '\1.', regexp_type: :gsub } }
-      rows    = xls_w2s.read(mapping_type: :array, mapping: mapping)[2 .. 4]
+      xls_w2s
+      rows = xls_w2s.read(mapping_type: :array, mapping: mapping)[2 .. 4]
 
       expect(rows).to eq([['Phi.li.p'], ['Kathle.e.n'], ['Ne.re.i.da']])
     end
