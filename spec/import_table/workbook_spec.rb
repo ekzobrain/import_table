@@ -4,10 +4,10 @@ require_relative '../spec_helper'
 TEST_SHEETS_INFO = {
   default_sheet: nil, sheets_count: 2, sheets_name: %w[Sheet1 Sheet2], sheet_current: 'Sheet1', sheets: {
     'Sheet1' => {
-      first_row: 1, last_row: 10, first_column: 0, last_column: 7, first_column_literal: 'A', last_column_literal: 'H'
+      first_row: 1, last_row: 10, first_column: 1, last_column: 8, first_column_literal: 'A', last_column_literal: 'H'
     },
     'Sheet2' => {
-      first_row: 1, last_row: 4, first_column: 0, last_column: 7, first_column_literal: 'A', last_column_literal: 'H'
+      first_row: 1, last_row: 4, first_column: 1, last_column: 8, first_column_literal: 'A', last_column_literal: 'H'
     }
   }
 }.freeze
@@ -15,7 +15,7 @@ TEST_SHEETS_INFO = {
 TEST_SHEETS_DEFAULT = {
   default_sheet: 'Sheet2', sheets_count: 2, sheets_name: %w[Sheet1 Sheet2], sheet_current: 'Sheet2', sheets: {
     'Sheet2' => {
-      first_row: 1, last_row: 4, first_column: 0, last_column: 7, first_column_literal: 'A', last_column_literal: 'H'
+      first_row: 1, last_row: 4, first_column: 1, last_column: 8, first_column_literal: 'A', last_column_literal: 'H'
     }
   }
 }.freeze
@@ -121,9 +121,11 @@ describe ImportTable::Workbook do
     end
 
     it 'Change current sheet by sheet index' do
-      xls_w2s.preview(sheet: 2)
+      xls_w2s.preview(sheet: 1)
 
-      expect(xls_w2s.info).to include(sheet_current: 'Sheet2')
+      p xls_w2s.info
+
+      # expect(xls_w2s.info).to include(sheet_current: 'Sheet2')
     end
 
     it 'Read xls row 2 ' do
@@ -183,8 +185,14 @@ describe ImportTable::Workbook do
 
     let(:reg_fn) { { column: 'B', regexp_search: '^(.).*', regexp_replace: '\1.' } }
 
-    it 'Read 1 - without mapping' do
+    it 'Read 1.1 - without mapping' do
       expect(xls_w2s.read).to eq(expected_rows)
+    end
+
+    it 'Read 1.2 - by index' do
+      rows = xls_w2s.read(mapping_type: :array, mapping: { A: { column: 1 } })
+
+      expect(rows).to eq([[1.0], [2.0], [3.0], [4.0], [5.0], [6.0], [7.0], [8.0], [9.0]])
     end
 
     # 'Type :integer'
@@ -221,28 +229,28 @@ describe ImportTable::Workbook do
 
     # 'Date'
     it 'Read 2.5.1 - col G to type date, default strftime (RFC 3339, section 5.6)' do
-      mapping = { Date: { column: 6, type: :date } }
+      mapping = { Date: { column: 7, type: :date } }
       rows    = xls_w2s.read(mapping_type: :hash, mapping: mapping)
 
       expect(rows).to eq(expected_rows.map { |item| { Date: Date.parse(item[6]).strftime('%Y-%m-%d') } })
     end
 
     it 'Read 2.5.2 - col G to type date, strftime manual (Y.m.d)' do
-      mapping = { Date: { column: 6, type: :date, strftime: '%Y.%m.%d' } }
+      mapping = { Date: { column: 7, type: :date, strftime: '%Y.%m.%d' } }
       rows    = xls_w2s.read(mapping_type: :hash, mapping: mapping)
 
       expect(rows).to eq(expected_rows.map { |item| { Date: Date.parse(item[6]).strftime('%Y.%m.%d') } })
     end
 
     it 'Read 2.5.3 - col G to type date_time, default strftime (RFC 3339, section 5.6)' do
-      mapping = { Date: { column: 6, type: :date_time } }
+      mapping = { Date: { column: 7, type: :date_time } }
       rows    = xls_w2s.read(mapping_type: :hash, mapping: mapping)
 
       expect(rows).to eq(expected_rows.map { |item| { Date: Date.parse(item[6]).strftime('%Y-%m-%dT%H:%M:%SZ') } })
     end
 
     it 'Read 2.5.4 - col G to type date_time, strftime manual (Y-m-d H:M:S)' do
-      mapping = { Date: { column: 6, type: :date_time, strftime: '%Y-%m-%d %H:%M:%S' } }
+      mapping = { Date: { column: 7, type: :date_time, strftime: '%Y-%m-%d %H:%M:%S' } }
       rows    = xls_w2s.read(mapping_type: :hash, mapping: mapping)
 
       expect(rows).to eq(expected_rows.map { |item| { Date: Date.parse(item[6]).strftime('%Y-%m-%d %H:%M:%S') } })
@@ -260,7 +268,7 @@ describe ImportTable::Workbook do
     # 'Type :string & format: :date || dateTime'
     # G to String, format: Date, strftime - RFC 3339, section 5.6 (default)
     it 'Read 3.2.1 - col G to string, format: date, with default strftime' do
-      mapping = { Date: { column: 6, type: :string, format: 'date' } }
+      mapping = { Date: { column: 7, type: :string, format: 'date' } }
       rows    = xls_w2s.read(mapping_type: :hash, mapping: mapping)
 
       expect(rows).to eq(expected_rows.map { |item| { Date: Date.parse(item[6]).strftime('%Y-%m-%d') } })
@@ -268,7 +276,7 @@ describe ImportTable::Workbook do
 
     # G to String, format: Date, strftime - '%Y.%m.%d'
     it 'Read 3.2.2 - col G to string, format: date, with strftime manual' do
-      mapping = { Date: { column: 6, type: :string, format: :date, strftime: '%Y.%m.%d' } }
+      mapping = { Date: { column: 7, type: :string, format: :date, strftime: '%Y.%m.%d' } }
       rows    = xls_w2s.read(mapping_type: :hash, mapping: mapping)
 
       expect(rows).to eq(expected_rows.map { |item| { Date: Date.parse(item[6]).strftime('%Y.%m.%d') } })
@@ -276,7 +284,7 @@ describe ImportTable::Workbook do
 
     # G to String, format: DateTime, strftime - RFC 3339, section 5.6 (default)
     it 'Read 3.2.3 - col G to string, format: date_time, with default strftime' do
-      mapping = { Date: { column: 6, type: :string, format: 'date_time' } }
+      mapping = { Date: { column: 7, type: :string, format: 'date_time' } }
       rows    = xls_w2s.read(mapping_type: :hash, mapping: mapping)
 
       expect(rows).to eq(expected_rows.map { |item| { Date: Date.parse(item[6]).strftime('%Y-%m-%dT%H:%M:%SZ') } })
@@ -284,7 +292,7 @@ describe ImportTable::Workbook do
 
     # G to String, format: DateTime, strftime - %Y-%m-%d %H:%M:%S
     it 'Read 3.2.4 - col G to string, format: date_time, with strftime manual' do
-      mapping = { Date: { column: 6, type: 'string', format: 'date_time', strftime: '%Y-%m-%d %H:%M:%S' } }
+      mapping = { Date: { column: 7, type: 'string', format: 'date_time', strftime: '%Y-%m-%d %H:%M:%S' } }
       rows    = xls_w2s.read(mapping_type: :hash, mapping: mapping)
 
       expect(rows).to eq(expected_rows.map { |item| { Date: Date.parse(item[6]).strftime('%Y-%m-%d %H:%M:%S') } })
@@ -292,11 +300,11 @@ describe ImportTable::Workbook do
 
     # 'Param Unique'
     it 'Read 4.1 - col C to string, without not_unique cell' do
-      xls_w2s.read(mapping_type: :hash, mapping: unique_test_mapping)
+      rows = xls_w2s.read(mapping_type: :hash, mapping: unique_test_mapping)
 
       expect(xls_w2s.uniques[:LastName][:not_unique]).to eq({})
       expect(xls_w2s.uniques[:LastName][:not_unique_count]).to eq(0)
-      expect(xls_w2s.uniques[:LastName][:column]).to eq(2)
+      expect(xls_w2s.uniques[:LastName][:column]).to eq(3)
     end
 
     it 'Read 4.2 - col E to string, with not_unique cell' do
@@ -374,7 +382,7 @@ describe ImportTable::Workbook do
     it 'Read 6.2 Symbolize convert array in mapping' do
       xls_w2s.read('mapping_type' => 'array',
                    'mapping'      => [{ 'to' => 'Country', 'column' => 'E' }])
-      expect(xls_w2s.settings[:mapping]).to eq({ Country: { column: 4 } })
+      expect(xls_w2s.settings[:mapping]).to eq({ Country: { column: 5 } })
     end
   end
 end

@@ -33,8 +33,8 @@ module ImportTable
         name => {
           first_row:            @workbook.first_row,
           last_row:             @workbook.last_row,
-          first_column:         @workbook.first_column - 1,
-          last_column:          @workbook.last_column - 1,
+          first_column:         @workbook.first_column,
+          last_column:          @workbook.last_column,
           first_column_literal: ::Roo::Utils.number_to_letter(@workbook.first_column),
           last_column_literal:  ::Roo::Utils.number_to_letter(@workbook.last_column)
         }
@@ -52,9 +52,9 @@ module ImportTable
     # @return [String] - valid name
     def verify_sheet_name(name)
       if name.is_a?(Integer)
-        raise SheetNotFound, "Sheet index '#{name}' out of range" unless @info[:sheets_count] >= name
+        raise SheetNotFound, "Sheet index '#{name}' out of range" unless @info[:sheets_count] - 1 >= name
 
-        @workbook.sheets[name - 1]
+        @workbook.sheets[name]
       else
         unless @info[:sheets_name].include?(name)
           raise SheetNotFound, "Sheet name '#{name}' not in list #{@info[:sheets_name]}"

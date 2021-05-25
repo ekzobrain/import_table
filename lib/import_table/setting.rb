@@ -39,7 +39,7 @@ module ImportTable
       return_type_set
 
       @settings[:mapping].each do |name, params|
-        letter_to_number(params)
+        column_set(params)
         param_to_sym(params)
         default_strftime(params)
         unique_set(name, params)
@@ -48,7 +48,7 @@ module ImportTable
     end
 
     def gen_header
-      last_column = @info[:sheets][@info[:sheet_current]][:last_column_literal]
+      last_column = last_current_column
 
       @settings[:mapping] = [*'A' .. last_column].map { |col| { column: col } }
     end
@@ -59,8 +59,15 @@ module ImportTable
       @settings[:mapping_type] = :hash unless %i[hash array].include?(@settings[:mapping_type])
     end
 
-    def letter_to_number(params)
-      params[:column] = ::Roo::Utils.letter_to_number(params[:column].to_s) - 1 unless params[:column].is_a?(Integer)
+    def column_set(params)
+      column = params[:column]
+      column = column.is_a?(Integer) ? column :  ::Roo::Utils.letter_to_number(column.to_s)
+
+      p @info
+      p column
+      p params[:column]
+
+      params[:column] = column
     end
 
     def param_to_sym(params)
@@ -109,6 +116,10 @@ module ImportTable
 
     def value_to_sym(params, params_name)
       [params_name].each { |i| params[i] = params[i].to_sym if params[i].is_a?(String) }
+    end
+
+    def last_current_column
+      @info[:sheets][@info[:sheet_current]][:last_column_literal]
     end
   end
 end

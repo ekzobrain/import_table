@@ -5,7 +5,7 @@ module ImportTable
     def prepare_cell(row, param, line)
       return nil unless param[:column]
 
-      result = cell_to_type(row[param[:column]], param)
+      result = cell_to_type(row[param[:column] - 1], param)
       result = regexp_cell(result, param) if param[:regexp_search]
       check_unique(result, param, line)
 

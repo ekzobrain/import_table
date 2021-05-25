@@ -43,3 +43,9 @@
   array_mapping (take key from column);
   type date_time.
 * Added return_type (alias for mapping_type);
+
+## [0.1.8] - 2021-05-25
+### Changed / Added
+* Fix:
+  Column index starts at 1;
+  Sheet index starts at 0.
