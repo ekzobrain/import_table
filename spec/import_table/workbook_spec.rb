@@ -132,6 +132,20 @@ describe ImportTable::Workbook do
       expect(rows[1][2 .. 4]).to eq(['Hashimoto', 'Female', 'Great Britain'])
     end
 
+    it 'Gen header' do
+      rows = xls_w2s.preview({ return_type: :hash })
+
+      expect(rows[2])
+        .to eq({ A: 3.0, B: 'Philip', C: 'Gent', D: 'Male', E: 'France', F: 36.0, G: '21/05/2015', H: 2587.0 })
+    end
+
+    it 'Without - Gen header' do
+      rows = xls_w2s.preview({ return_type: :array })
+
+      expect(rows[2])
+        .to eq([3.0, 'Philip', 'Gent', 'Male', 'France', 36.0, '21/05/2015', 2587.0])
+    end
+
     it 'Read csv row 2 ' do
       rows = csv_eo_wd.preview
 
@@ -290,6 +304,7 @@ describe ImportTable::Workbook do
 
       expect(xls_w2s.uniques[:Country][:not_unique])
         .to eq({ 'Great Britain' => [8], 'United States' => [5, 6, 7, 9, 10] })
+
       expect(xls_w2s.uniques[:Country][:not_unique_count]).to eq(6)
     end
 

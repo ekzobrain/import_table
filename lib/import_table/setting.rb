@@ -11,7 +11,9 @@ module ImportTable
       verify_rows_settings(for_method)
       @settings = symbolize(@settings)
 
-      return unless @settings.include?(:mapping)
+      unless @settings.include?(:mapping)
+        @settings[:return_type] == :hash ? gen_header : return
+      end
 
       extract_array_mapping if @settings[:mapping].is_a?(Array)
       prepare_mapping
@@ -43,6 +45,12 @@ module ImportTable
         unique_set(name, params)
         regexp_set(params)
       end
+    end
+
+    def gen_header
+      last_column = @info[:sheets][@info[:sheet_current]][:last_column_literal]
+
+      @settings[:mapping] = [*'A' .. last_column].map { |col| { column: col } }
     end
 
     def return_type_set
