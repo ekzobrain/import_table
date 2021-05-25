@@ -79,7 +79,7 @@ describe ImportTable::Workbook do
     end
 
     it 'Sheets info 2 - only default sheet info (by number)' do
-      wb = described_class.new(f_xls2s, { default_sheet: 2 })
+      wb = described_class.new(f_xls2s, { default_sheet: 1 })
 
       expect(wb.info).to eq(TEST_SHEETS_DEFAULT)
     end
@@ -123,9 +123,7 @@ describe ImportTable::Workbook do
     it 'Change current sheet by sheet index' do
       xls_w2s.preview(sheet: 1)
 
-      p xls_w2s.info
-
-      # expect(xls_w2s.info).to include(sheet_current: 'Sheet2')
+      expect(xls_w2s.info).to include(sheet_current: 'Sheet2')
     end
 
     it 'Read xls row 2 ' do
@@ -300,7 +298,7 @@ describe ImportTable::Workbook do
 
     # 'Param Unique'
     it 'Read 4.1 - col C to string, without not_unique cell' do
-      rows = xls_w2s.read(mapping_type: :hash, mapping: unique_test_mapping)
+      xls_w2s.read(mapping_type: :hash, mapping: unique_test_mapping)
 
       expect(xls_w2s.uniques[:LastName][:not_unique]).to eq({})
       expect(xls_w2s.uniques[:LastName][:not_unique_count]).to eq(0)

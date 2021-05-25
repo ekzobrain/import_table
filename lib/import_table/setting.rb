@@ -60,14 +60,7 @@ module ImportTable
     end
 
     def column_set(params)
-      column = params[:column]
-      column = column.is_a?(Integer) ? column :  ::Roo::Utils.letter_to_number(column.to_s)
-
-      p @info
-      p column
-      p params[:column]
-
-      params[:column] = column
+      params[:column] = ::Roo::Utils.letter_to_number(params[:column].to_s) unless params[:column].is_a?(Integer)
     end
 
     def param_to_sym(params)
